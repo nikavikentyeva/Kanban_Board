@@ -10,7 +10,6 @@
 </template>
 
 <script setup lang="ts">
-// App root
 </script>
 
 <style scoped>
