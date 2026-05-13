@@ -7,11 +7,11 @@ export interface ColumnProps {
   count?: number
 }
 
-type ColumnEmits = (e: 'add-task') => void
-
 defineProps<ColumnProps>()
 
-const emit = defineEmits<ColumnEmits>()
+const emit = defineEmits<{
+  'add-task': []
+}>()
 </script>
 
 <template>

@@ -1,17 +1,21 @@
 <script setup lang="ts">
-
 export interface CardProps {
+  taskId: string
   title: string
   description?: string
 }
 
 defineProps<CardProps>()
+
+const emit = defineEmits<{
+  click: [taskId: string]
+}>()
 </script>
 
 <template>
-  <div class="card">
+  <div class="card" @click="emit('click', taskId)">
     <p class="card__title">{{ title }}</p>
-    <p class="card__description">{{ description }}</p>
+    <p v-if="description" class="card__description">{{ description }}</p>
   </div>
 </template>
 
@@ -23,6 +27,7 @@ defineProps<CardProps>()
   padding: 12px;
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
+
   &:hover {
     border-color: var(--color-border-hover);
     box-shadow: var(--shadow-md);
@@ -49,6 +54,7 @@ defineProps<CardProps>()
     border-style: dashed;
     text-align: center;
     cursor: default;
+
     &:hover {
       box-shadow: none;
       border-color: var(--color-border);

@@ -1,76 +1,82 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import Modal from '@/components/Modal.vue'
+import type { Task } from '@/types'
 
-export interface AddTaskModalProps {
+export interface EditTaskModalProps {
   open: boolean
+  task: Task | null
 }
 
-const props = defineProps<AddTaskModalProps>()
+const props = defineProps<EditTaskModalProps>()
 
 const emit = defineEmits<{
   close: []
-  submit: [title: string, description: string]
+  save: [title: string, description: string]
+  delete: []
 }>()
 
 const title = ref('')
 const description = ref('')
 
 watch(
-  () => props.open,
-  (isOpen) => {
-    if (isOpen) {
-      title.value = ''
-      description.value = ''
+  () => props.task,
+  (task) => {
+    if (task) {
+      title.value = task.title
+      description.value = task.description
     }
-  }
+  },
+  { immediate: true }
 )
 
-function handleSubmit() {
+function handleSave() {
   const trimmedTitle = title.value.trim()
   if (!trimmedTitle) return
 
-  emit('submit', trimmedTitle, description.value.trim())
+  emit('save', trimmedTitle, description.value.trim())
 }
 
 function handleClose() {
   emit('close')
 }
+
+function handleDelete() {
+  emit('delete')
+}
 </script>
 
 <template>
-  <Modal
-    :open="open"
-    @close="handleClose"
-  >
-    <h3 class="add-task-modal__title">Добавить задачу</h3>
-    <form
-      class="add-task-modal__form"
-      @submit.prevent="handleSubmit"
-    >
+  <Modal :open="open" @close="handleClose">
+    <h3 class="edit-task-modal__title">Редактировать задачу</h3>
+    <form class="edit-task-modal__form" @submit.prevent="handleSave">
       <input
         v-model="title"
         type="text"
         placeholder="Название задачи"
-        class="add-task-modal__input"
-        autofocus
+        class="edit-task-modal__input"
       />
       <textarea
         v-model="description"
         placeholder="Описание (необязательно)"
-        class="add-task-modal__textarea"
+        class="edit-task-modal__textarea"
         rows="3"
       />
-      <div class="add-task-modal__actions">
+      <div class="edit-task-modal__actions">
         <button
           type="submit"
-          class="add-task-modal__btn add-task-modal__btn--primary"
+          class="edit-task-modal__btn edit-task-modal__btn--primary"
           :disabled="!title.trim()"
         >
-          Добавить
+          Сохранить
         </button>
-        <button type="button" class="add-task-modal__btn" @click="handleClose">
+        <button type="button" class="edit-task-modal__btn" @click="handleClose">
           Отмена
+        </button>
+      </div>
+      <div class="edit-task-modal__danger">
+        <button type="button" class="edit-task-modal__btn edit-task-modal__btn--danger" @click="handleDelete">
+          Удалить задачу
         </button>
       </div>
     </form>
@@ -78,21 +84,21 @@ function handleClose() {
 </template>
 
 <style scoped lang="scss">
-.add-task-modal__title {
+.edit-task-modal__title {
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 16px;
   color: var(--color-text-primary);
 }
 
-.add-task-modal__form {
+.edit-task-modal__form {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.add-task-modal__input,
-.add-task-modal__textarea {
+.edit-task-modal__input,
+.edit-task-modal__textarea {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--color-border);
@@ -108,17 +114,25 @@ function handleClose() {
   }
 }
 
-.add-task-modal__textarea {
+.edit-task-modal__textarea {
   line-height: 1.5;
 }
 
-.add-task-modal__actions {
+.edit-task-modal__actions {
   display: flex;
   gap: 10px;
   margin-top: 4px;
 }
 
-.add-task-modal__btn {
+.edit-task-modal__danger {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.edit-task-modal__btn {
   padding: 8px 16px;
   border-radius: var(--radius-sm);
   font-size: 14px;
@@ -146,6 +160,16 @@ function handleClose() {
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+  }
+
+  &--danger {
+    color: #ef4444;
+    border-color: #ef4444;
+    background: #fff;
+
+    &:hover:not(:disabled) {
+      background: #fee2e2;
     }
   }
 }

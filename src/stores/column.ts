@@ -16,5 +16,12 @@ export const useColumnStore = defineStore('column', () => {
     }
   }
 
-  return { columns, setColumns, addTaskToColumn }
+  function removeTaskFromColumn(columnId: string, taskId: string) {
+    const column = columns.value.find((c) => c.id === columnId)
+    if (column) {
+      column.taskIds = column.taskIds.filter((id) => id !== taskId)
+    }
+  }
+
+  return { columns, setColumns, addTaskToColumn, removeTaskFromColumn }
 });

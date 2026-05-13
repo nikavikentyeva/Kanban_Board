@@ -5,10 +5,11 @@ export interface ModalProps {
   open: boolean
 }
 
-type ModalEmits = (e: 'close') => void
-
 const props = defineProps<ModalProps>()
-const emit = defineEmits<ModalEmits>()
+
+const emit = defineEmits<{
+  close: []
+}>()
 
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape' && props.open) {
