@@ -2,6 +2,7 @@
 import BaseAddButton from '@/components/BaseAddButton.vue'
 
 export interface ColumnProps {
+  columnId: string
   title: string
   count?: number
 }
@@ -17,13 +18,21 @@ const emit = defineEmits<ColumnEmits>()
   <div class="column">
     <div class="column__header">
       <span class="column__title">{{ title }}</span>
-      <span v-if="count !== undefined" class="column__count">{{ count }}</span>
+      <span
+        v-if="count !== undefined"
+        class="column__count"
+      >
+        {{ count }}
+      </span>
     </div>
     <div class="column__tasks">
       <slot />
     </div>
     <div class="column__footer">
-      <BaseAddButton text="Добавить задачу" @click="emit('add-task')" />
+      <BaseAddButton
+        text="Добавить задачу"
+        @click="emit('add-task')"
+      />
     </div>
   </div>
 </template>
