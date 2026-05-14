@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import BaseAddButton from '@/components/BaseAddButton.vue'
 
-const emit = defineEmits<{
+export interface AddColumnButtonEmits {
   click: []
-}>()
+}
+
+const emit = defineEmits<AddColumnButtonEmits>()
 </script>
 
 <template>

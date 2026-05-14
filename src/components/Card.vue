@@ -5,11 +5,13 @@ export interface CardProps {
   description?: string
 }
 
-defineProps<CardProps>()
-
-const emit = defineEmits<{
+export interface CardEmits {
   click: [taskId: string]
-}>()
+}
+
+
+defineProps<CardProps>()
+const emit = defineEmits<CardEmits>()
 </script>
 
 <template>

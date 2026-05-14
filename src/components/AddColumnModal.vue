@@ -2,27 +2,25 @@
 import { ref, watch } from 'vue'
 import Modal from '@/components/Modal.vue'
 
-export interface AddTaskModalProps {
+export interface AddColumnModalProps {
   open: boolean
 }
 
-export interface AddTaskModalEmits {
+export interface AddColumnModalEmits {
   close: []
-  submit: [title: string, description: string]
+  submit: [title: string]
 }
 
-const props = defineProps<AddTaskModalProps>()
-const emit = defineEmits<AddTaskModalEmits>()
+const props = defineProps<AddColumnModalProps>()
+const emit = defineEmits<AddColumnModalEmits>()
 
 const title = ref('')
-const description = ref('')
 
 watch(
   () => props.open,
   (isOpen) => {
     if (isOpen) {
       title.value = ''
-      description.value = ''
     }
   }
 )
@@ -31,7 +29,7 @@ function handleSubmit() {
   const trimmedTitle = title.value.trim()
   if (!trimmedTitle) return
 
-  emit('submit', trimmedTitle, description.value.trim())
+  emit('submit', trimmedTitle)
 }
 
 function handleClose() {
@@ -44,33 +42,27 @@ function handleClose() {
     :open="open"
     @close="handleClose"
   >
-    <h3 class="add-task-modal__title">Добавить задачу</h3>
+    <h3 class="add-column-modal__title">Добавить колонку</h3>
     <form
-      class="add-task-modal__form"
+      class="add-column-modal__form"
       @submit.prevent="handleSubmit"
     >
       <input
         v-model="title"
         type="text"
-        placeholder="Название задачи"
-        class="add-task-modal__input"
+        placeholder="Название колонки"
+        class="add-column-modal__input"
         autofocus
       />
-      <textarea
-        v-model="description"
-        placeholder="Описание (необязательно)"
-        class="add-task-modal__textarea"
-        rows="3"
-      />
-      <div class="add-task-modal__actions">
+      <div class="add-column-modal__actions">
         <button
           type="submit"
-          class="add-task-modal__btn add-task-modal__btn--primary"
+          class="add-column-modal__btn add-column-modal__btn--primary"
           :disabled="!title.trim()"
         >
           Добавить
         </button>
-        <button type="button" class="add-task-modal__btn" @click="handleClose">
+        <button type="button" class="add-column-modal__btn" @click="handleClose">
           Отмена
         </button>
       </div>
@@ -79,28 +71,26 @@ function handleClose() {
 </template>
 
 <style scoped lang="scss">
-.add-task-modal__title {
+.add-column-modal__title {
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 16px;
   color: var(--color-text-primary);
 }
 
-.add-task-modal__form {
+.add-column-modal__form {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.add-task-modal__input,
-.add-task-modal__textarea {
+.add-column-modal__input {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 14px;
   font-family: inherit;
-  resize: none;
   background: var(--color-surface);
 
   &:focus {
@@ -109,17 +99,13 @@ function handleClose() {
   }
 }
 
-.add-task-modal__textarea {
-  line-height: 1.5;
-}
-
-.add-task-modal__actions {
+.add-column-modal__actions {
   display: flex;
   gap: 10px;
   margin-top: 4px;
 }
 
-.add-task-modal__btn {
+.add-column-modal__btn {
   padding: 8px 16px;
   border-radius: var(--radius-sm);
   font-size: 14px;

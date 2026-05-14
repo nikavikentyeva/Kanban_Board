@@ -3,11 +3,12 @@ export interface BaseAddButtonProps {
   text: string
 }
 
-defineProps<BaseAddButtonProps>()
-
-const emit = defineEmits<{
+export interface BaseAddButtonEmits {
   click: []
-}>()
+}
+
+defineProps<BaseAddButtonProps>()
+const emit = defineEmits<BaseAddButtonEmits>()
 </script>
 
 <template>

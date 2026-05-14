@@ -1,27 +1,33 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import Board from '@/components/Board.vue'
 import Column from '@/components/Column.vue'
 import Card from '@/components/Card.vue'
 import AddColumnButton from '@/components/AddColumnButton.vue'
+import AddColumnModal from '@/components/AddColumnModal.vue'
 import AddTaskModal from '@/components/AddTaskModal.vue'
 import EditTaskModal from '@/components/EditTaskModal.vue'
+import EditColumnModal from '@/components/EditColumnModal.vue'
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue'
 import { useTaskStore } from '@/stores/task'
 import { useColumnStore } from '@/stores/column'
 import { useBoardStore } from '@/stores/board'
-import type { Task } from '@/types'
+import type { Task, Column as ColumnType } from '@/types'
 
 const taskStore = useTaskStore()
 const columnStore = useColumnStore()
 const boardStore = useBoardStore()
 
 const isAddTaskModalOpen = ref(false)
+const isAddColumnModalOpen = ref(false)
 const activeColumnId = ref<string | null>(null)
 
 const isEditTaskModalOpen = ref(false)
+const isEditColumnModalOpen = ref(false)
 const isConfirmDeleteModalOpen = ref(false)
+const deleteMode = ref<'task' | 'column'>('task')
 const activeTask = ref<Task | null>(null)
+const activeColumn = ref<ColumnType | null>(null)
 
 onMounted(() => {
   const seedColumns = [
@@ -48,6 +54,10 @@ function openAddTaskModal(columnId: string) {
   isAddTaskModalOpen.value = true
 }
 
+function openAddColumnModal() {
+  isAddColumnModalOpen.value = true
+}
+
 function handleAddTask(title: string, description: string) {
   if (!activeColumnId.value) return
 
@@ -71,15 +81,53 @@ function handleSaveTask(title: string, description: string) {
 
 function handleRequestDelete() {
   isEditTaskModalOpen.value = false
+  deleteMode.value = 'task'
   isConfirmDeleteModalOpen.value = true
 }
 
-function handleConfirmDelete() {
+function openEditColumnModal(column: ColumnType) {
+  activeColumn.value = column
+  isEditColumnModalOpen.value = true
+}
+
+function handleDeleteColumn(columnId: string) {
+  activeColumnId.value = columnId
+  deleteMode.value = 'column'
+  isConfirmDeleteModalOpen.value = true
+}
+
+function handleSaveColumn(title: string) {
+  if (!activeColumn.value) return
+  columnStore.updateColumn(activeColumn.value.id, title)
+  isEditColumnModalOpen.value = false
+  activeColumn.value = null
+}
+
+function performDeleteTask() {
   if (!activeTask.value) return
-  taskStore.removeTask(activeTask.value.id)
-  columnStore.removeTaskFromColumn(activeTask.value.columnId, activeTask.value.id)
-  isConfirmDeleteModalOpen.value = false
-  activeTask.value = null
+  const task = activeTask.value
+  taskStore.removeTask(task.id)
+  columnStore.removeTaskFromColumn(task.columnId, task.id)
+}
+
+function performDeleteColumn() {
+  if (!activeColumnId.value) return
+
+  const column = columnStore.columns.find(col => col.id === activeColumnId.value)
+  if (!column) return
+
+  column.taskIds.forEach(taskId => taskStore.removeTask(taskId))
+  columnStore.removeColumn(activeColumnId.value)
+}
+
+function handleConfirmDelete() {
+  if (deleteMode.value === 'task') {
+    performDeleteTask()
+  } else {
+    performDeleteColumn()
+  }
+
+  handleCloseConfirmModal()
 }
 
 function handleCloseAddModal() {
@@ -87,15 +135,44 @@ function handleCloseAddModal() {
   activeColumnId.value = null
 }
 
+function handleCloseAddColumnModal() {
+  isAddColumnModalOpen.value = false
+}
+
 function handleCloseEditModal() {
   isEditTaskModalOpen.value = false
   activeTask.value = null
 }
 
+function handleCloseEditColumnModal() {
+  isEditColumnModalOpen.value = false
+  activeColumn.value = null
+}
+
 function handleCloseConfirmModal() {
   isConfirmDeleteModalOpen.value = false
   activeTask.value = null
+  activeColumnId.value = null
 }
+
+function handleAddColumn(title: string) {
+  columnStore.addColumn(title)
+  isAddColumnModalOpen.value = false
+}
+
+const deleteModalTitle = computed(() =>
+  deleteMode.value === 'column' ? 'Удалить колонку?' : 'Удалить задачу?'
+)
+
+const deleteModalDescription = computed(() =>
+  deleteMode.value === 'column'
+    ? 'Вы уверены, что хотите удалить эту колонку? Все задачи в ней будут удалены. Это действие нельзя отменить.'
+    : 'Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.'
+)
+
+const deleteModalConfirmText = computed(() =>
+  deleteMode.value === 'column' ? 'Удалить колонку' : 'Удалить'
+)
 </script>
 
 <template>
@@ -110,6 +187,8 @@ function handleCloseConfirmModal() {
       :title="column.title"
       :count="column.taskIds.length"
       @add-task="openAddTaskModal(column.id)"
+      @edit="openEditColumnModal(column)"
+      @delete="handleDeleteColumn(column.id)"
     >
       <Card
         v-for="task in taskStore.getTasksByIds(column.taskIds)"
@@ -121,8 +200,14 @@ function handleCloseConfirmModal() {
       />
     </Column>
 
-    <AddColumnButton @click="" />
+    <AddColumnButton @click="openAddColumnModal" />
   </Board>
+
+  <AddColumnModal
+    :open="isAddColumnModalOpen"
+    @close="handleCloseAddColumnModal"
+    @submit="handleAddColumn"
+  />
 
   <AddTaskModal
     :open="isAddTaskModalOpen"
@@ -138,8 +223,18 @@ function handleCloseConfirmModal() {
     @delete="handleRequestDelete"
   />
 
+  <EditColumnModal
+    :open="isEditColumnModalOpen"
+    :column="activeColumn"
+    @close="handleCloseEditColumnModal"
+    @save="handleSaveColumn"
+  />
+
   <ConfirmDeleteModal
     :open="isConfirmDeleteModalOpen"
+    :title="deleteModalTitle"
+    :description="deleteModalDescription"
+    :confirm-text="deleteModalConfirmText"
     @close="handleCloseConfirmModal"
     @confirm="handleConfirmDelete"
   />

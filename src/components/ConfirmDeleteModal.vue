@@ -3,14 +3,23 @@ import Modal from '@/components/Modal.vue'
 
 export interface ConfirmDeleteModalProps {
   open: boolean
+  title?: string
+  description?: string
+  confirmText?: string
 }
 
-defineProps<ConfirmDeleteModalProps>()
-
-const emit = defineEmits<{
+export interface ConfirmDeleteModalEmits {
   close: []
   confirm: []
-}>()
+}
+
+withDefaults(defineProps<ConfirmDeleteModalProps>(), {
+  title: 'Удалить задачу?',
+  description: 'Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.',
+  confirmText: 'Удалить',
+})
+
+const emit = defineEmits<ConfirmDeleteModalEmits>()
 
 function handleClose() {
   emit('close')
@@ -23,16 +32,16 @@ function handleConfirm() {
 
 <template>
   <Modal :open="open" @close="handleClose">
-    <h3 class="confirm-delete-modal__title">Удалить задачу?</h3>
+    <h3 class="confirm-delete-modal__title">{{ title }}</h3>
     <p class="confirm-delete-modal__text">
-      Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.
+      {{ description }}
     </p>
     <div class="confirm-delete-modal__actions">
       <button
         class="confirm-delete-modal__btn confirm-delete-modal__btn--danger"
         @click="handleConfirm"
       >
-        Удалить
+        {{ confirmText }}
       </button>
       <button class="confirm-delete-modal__btn" @click="handleClose">
         Отмена

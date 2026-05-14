@@ -1,31 +1,28 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import Modal from '@/components/Modal.vue'
-import type { Task } from '@/types'
+import type { Column } from '@/types'
 
-export interface EditTaskModalProps {
+export interface EditColumnModalProps {
   open: boolean
-  task: Task | null
+  column: Column | null
 }
 
-export interface EditTaskModalEmits {
+export interface EditColumnModalEmits {
   close: []
-  save: [title: string, description: string]
-  delete: []
+  save: [title: string]
 }
 
-const props = defineProps<EditTaskModalProps>()
-const emit = defineEmits<EditTaskModalEmits>()
+const props = defineProps<EditColumnModalProps>()
+const emit = defineEmits<EditColumnModalEmits>()
 
 const title = ref('')
-const description = ref('')
 
 watch(
-  () => props.task,
-  (task) => {
-    if (task) {
-      title.value = task.title
-      description.value = task.description
+  () => props.column,
+  (column) => {
+    if (column) {
+      title.value = column.title
     }
   },
   { immediate: true }
@@ -35,78 +32,63 @@ function handleSave() {
   const trimmedTitle = title.value.trim()
   if (!trimmedTitle) return
 
-  emit('save', trimmedTitle, description.value.trim())
+  emit('save', trimmedTitle)
 }
 
 function handleClose() {
   emit('close')
 }
 
-function handleDelete() {
-  emit('delete')
-}
 </script>
 
 <template>
   <Modal :open="open" @close="handleClose">
-    <h3 class="edit-task-modal__title">Редактировать задачу</h3>
-    <form class="edit-task-modal__form" @submit.prevent="handleSave">
+    <h3 class="edit-column-modal__title">Редактировать колонку</h3>
+    <form class="edit-column-modal__form" @submit.prevent="handleSave">
       <input
         v-model="title"
         type="text"
-        placeholder="Название задачи"
-        class="edit-task-modal__input"
+        placeholder="Название колонки"
+        class="edit-column-modal__input"
       />
-      <textarea
-        v-model="description"
-        placeholder="Описание (необязательно)"
-        class="edit-task-modal__textarea"
-        rows="3"
-      />
-      <div class="edit-task-modal__actions">
+      <div class="edit-column-modal__actions">
         <button
           type="submit"
-          class="edit-task-modal__btn edit-task-modal__btn--primary"
+          class="edit-column-modal__btn edit-column-modal__btn--primary"
           :disabled="!title.trim()"
         >
           Сохранить
         </button>
-        <button type="button" class="edit-task-modal__btn" @click="handleClose">
+        <button type="button" class="edit-column-modal__btn" @click="handleClose">
           Отмена
         </button>
       </div>
-      <div class="edit-task-modal__danger">
-        <button type="button" class="edit-task-modal__btn edit-task-modal__btn--danger" @click="handleDelete">
-          Удалить задачу
-        </button>
-      </div>
+
     </form>
   </Modal>
 </template>
 
 <style scoped lang="scss">
-.edit-task-modal__title {
+.edit-column-modal__title {
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 16px;
   color: var(--color-text-primary);
 }
 
-.edit-task-modal__form {
+.edit-column-modal__form {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.edit-task-modal__input,
-.edit-task-modal__textarea {
+.edit-column-modal__input {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 14px;
   font-family: inherit;
-  resize: none;
   background: var(--color-surface);
 
   &:focus {
@@ -115,25 +97,13 @@ function handleDelete() {
   }
 }
 
-.edit-task-modal__textarea {
-  line-height: 1.5;
-}
-
-.edit-task-modal__actions {
+.edit-column-modal__actions {
   display: flex;
   gap: 10px;
   margin-top: 4px;
 }
 
-.edit-task-modal__danger {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--color-border);
-}
-
-.edit-task-modal__btn {
+.edit-column-modal__btn {
   padding: 8px 16px;
   border-radius: var(--radius-sm);
   font-size: 14px;
