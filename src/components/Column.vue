@@ -51,7 +51,7 @@ const emit = defineEmits<ColumnEmits>()
       </div>
     </div>
     <div class="column__tasks">
-      <slot />
+      <slot name="tasks" />
     </div>
     <div class="column__footer">
       <BaseAddButton

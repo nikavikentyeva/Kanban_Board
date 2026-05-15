@@ -34,9 +34,16 @@ export const useTaskStore = defineStore('task', () => {
     delete tasks[taskId]
   }
 
+  function moveTask(taskId: string, newColumnId: string) {
+    const task = tasks[taskId]
+    if (task) {
+      task.columnId = newColumnId
+    }
+  }
+
   function getTasksByIds(ids: string[]): Task[] {
     return ids.map((id) => tasks[id]).filter(Boolean)
   }
 
-  return { tasks, addTask, updateTask, removeTask, getTasksByIds }
+  return { tasks, addTask, updateTask, removeTask, moveTask, getTasksByIds }
 });

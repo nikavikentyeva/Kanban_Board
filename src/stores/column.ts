@@ -41,5 +41,12 @@ export const useColumnStore = defineStore('column', () => {
     }
   }
 
-  return { columns, setColumns, addTaskToColumn, removeTaskFromColumn, addColumn, removeColumn, updateColumn }
+  function updateColumnTaskIds(columnId: string, taskIds: string[]) {
+    const column = columns.value.find((col) => col.id === columnId)
+    if (column) {
+      column.taskIds = taskIds
+    }
+  }
+
+  return { columns, setColumns, addTaskToColumn, removeTaskFromColumn, addColumn, removeColumn, updateColumn, updateColumnTaskIds }
 });

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
+import draggable from 'vuedraggable'
 import Board from '@/components/Board.vue'
 import Column from '@/components/Column.vue'
 import Card from '@/components/Card.vue'
@@ -12,7 +13,7 @@ import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue'
 import { useTaskStore } from '@/stores/task'
 import { useColumnStore } from '@/stores/column'
 import { useBoardStore } from '@/stores/board'
-import type { Task, Column as ColumnType } from '@/types'
+import type { Task, Column as ColumnType, DraggableChangeEvent } from '@/types'
 
 const taskStore = useTaskStore()
 const columnStore = useColumnStore()
@@ -160,6 +161,12 @@ function handleAddColumn(title: string) {
   isAddColumnModalOpen.value = false
 }
 
+function handleTaskChange(columnId: string, event: DraggableChangeEvent<string>) {
+  if (event.added) {
+    taskStore.moveTask(event.added.element, columnId)
+  }
+}
+
 const deleteModalTitle = computed(() =>
   deleteMode.value === 'column' ? 'Удалить колонку?' : 'Удалить задачу?'
 )
@@ -190,14 +197,26 @@ const deleteModalConfirmText = computed(() =>
       @edit="openEditColumnModal(column)"
       @delete="handleDeleteColumn(column.id)"
     >
-      <Card
-        v-for="task in taskStore.getTasksByIds(column.taskIds)"
-        :key="task.id"
-        :task-id="task.id"
-        :title="task.title"
-        :description="task.description"
-        @click="openEditTaskModal(task)"
-      />
+      <template #tasks>
+        <draggable
+          v-model="column.taskIds"
+          class="draggable-list"
+          group="tasks"
+          :item-key="(id: string) => id"
+          ghost-class="card--ghost"
+          drag-class="card--dragging"
+          @change="handleTaskChange(column.id, $event)"
+        >
+          <template #item="{ element: taskId }">
+            <Card
+              :task-id="taskId"
+              :title="taskStore.tasks[taskId].title"
+              :description="taskStore.tasks[taskId].description"
+              @click="openEditTaskModal(taskStore.tasks[taskId])"
+            />
+          </template>
+        </draggable>
+      </template>
     </Column>
 
     <AddColumnButton @click="openAddColumnModal" />
@@ -241,5 +260,23 @@ const deleteModalConfirmText = computed(() =>
 </template>
 
 <style scoped lang="scss">
+.draggable-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
+:deep(.card--ghost) {
+  opacity: 0.4;
+  background: var(--color-surface);
+  border: 2px dashed var(--color-accent);
+  box-shadow: none;
+}
+
+:deep(.card--dragging) {
+  opacity: 0.95;
+  box-shadow: var(--shadow-lg);
+  transform: rotate(2deg);
+  cursor: grabbing;
+}
 </style>
