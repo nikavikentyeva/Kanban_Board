@@ -10,8 +10,13 @@ defineProps<BoardProps>()
 <template>
   <div class="board">
     <div class="board__header">
-      <h2 class="board__title">{{ title }}</h2>
-      <span class="board__counter">{{ columnsCount }} колонки</span>
+      <div class="board__header-left">
+        <h2 class="board__title">{{ title }}</h2>
+        <span class="board__counter">{{ columnsCount }} колонки</span>
+      </div>
+      <div class="board__header-actions">
+        <slot name="header-actions" />
+      </div>
     </div>
     <div class="board__columns">
       <slot />
@@ -27,10 +32,23 @@ defineProps<BoardProps>()
 
   &__header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
     padding: 20px 24px 12px;
     flex-shrink: 0;
+  }
+
+  &__header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   &__title {

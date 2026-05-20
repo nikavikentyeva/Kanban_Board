@@ -41,9 +41,16 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  function setTasks(newTasks: Record<string, Task>) {
+    Object.keys(tasks).forEach((key) => {
+      delete tasks[key]
+    })
+    Object.assign(tasks, newTasks)
+  }
+
   function getTasksByIds(ids: string[]): Task[] {
     return ids.map((id) => tasks[id]).filter(Boolean)
   }
 
-  return { tasks, addTask, updateTask, removeTask, moveTask, getTasksByIds }
+  return { tasks, addTask, updateTask, removeTask, moveTask, setTasks, getTasksByIds }
 });

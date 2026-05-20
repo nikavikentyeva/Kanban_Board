@@ -13,11 +13,13 @@ import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue'
 import { useTaskStore } from '@/stores/task'
 import { useColumnStore } from '@/stores/column'
 import { useBoardStore } from '@/stores/board'
+import { useBoardStorage, seedBoardData } from '@/composables/useBoardStorage'
 import type { Task, Column as ColumnType, DraggableChangeEvent } from '@/types'
 
 const taskStore = useTaskStore()
 const columnStore = useColumnStore()
 const boardStore = useBoardStore()
+const { loadState, resetBoard, isLoaded } = useBoardStorage()
 
 const isAddTaskModalOpen = ref(false)
 const isAddColumnModalOpen = ref(false)
@@ -31,23 +33,11 @@ const activeTask = ref<Task | null>(null)
 const activeColumn = ref<ColumnType | null>(null)
 
 onMounted(() => {
-  const seedColumns = [
-    { id: 'col-1', title: 'Сделать', taskIds: [] as string[] },
-    { id: 'col-2', title: 'В процессе', taskIds: [] as string[] },
-    { id: 'col-3', title: 'Готово', taskIds: [] as string[] },
-  ]
-
-  const seedTasks = [
-    { columnId: 'col-1', title: 'Добавить авторизацию', description: 'Реализовать вход через OAuth' },
-    { columnId: 'col-1', title: 'Настроить CI/CD', description: '' },
-    { columnId: 'col-2', title: 'Верстка Kanban-доски', description: '' },
-  ]
-
-  columnStore.setColumns(seedColumns)
-  seedTasks.forEach((task) => {
-    const created = taskStore.addTask(task.columnId, task.title, task.description)
-    columnStore.addTaskToColumn(task.columnId, created.id)
-  })
+  const loaded = loadState()
+  if (!loaded) {
+    seedBoardData()
+  }
+  isLoaded.value = true
 })
 
 function openAddTaskModal(columnId: string) {
@@ -167,6 +157,12 @@ function handleTaskChange(columnId: string, event: DraggableChangeEvent<string>)
   }
 }
 
+function handleResetBoard() {
+  if (confirm('Вы уверены, что хотите сбросить доску? Все изменения будут потеряны.')) {
+    resetBoard()
+  }
+}
+
 const deleteModalTitle = computed(() =>
   deleteMode.value === 'column' ? 'Удалить колонку?' : 'Удалить задачу?'
 )
@@ -187,6 +183,9 @@ const deleteModalConfirmText = computed(() =>
     :title="boardStore.title"
     :columns-count="columnStore.columns.length"
   >
+    <template #header-actions>
+      <button class="reset-btn" @click="handleResetBoard">Сбросить доску</button>
+    </template>
     <Column
       v-for="column in columnStore.columns"
       :key="column.id"
@@ -260,6 +259,23 @@ const deleteModalConfirmText = computed(() =>
 </template>
 
 <style scoped lang="scss">
+.reset-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
+}
+
+.reset-btn:hover {
+  border-color: var(--color-border-hover);
+  background: #f9fafb;
+}
+
 .draggable-list {
   display: flex;
   flex-direction: column;
