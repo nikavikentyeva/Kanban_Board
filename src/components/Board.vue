@@ -1,10 +1,30 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useSearch } from '@/composables/useSearch'
+import { useTaskStore } from '@/stores/task'
+import { pluralize } from '@/utils/pluralize'
+
 export interface BoardProps {
   title: string
   columnsCount?: number
 }
 
 defineProps<BoardProps>()
+
+const { isSearching, debouncedQuery } = useSearch()
+const taskStore = useTaskStore()
+
+const searchCount = computed(() => {
+  if (!debouncedQuery.value) {
+    return 0
+  }
+
+  return Object.values(taskStore.tasks).filter(
+    (task) =>
+      task.title.toLowerCase().includes(debouncedQuery.value) ||
+      task.description.toLowerCase().includes(debouncedQuery.value)
+  ).length
+})
 </script>
 
 <template>
@@ -12,7 +32,10 @@ defineProps<BoardProps>()
     <div class="board__header">
       <div class="board__header-left">
         <h2 class="board__title">{{ title }}</h2>
-        <span class="board__counter">{{ columnsCount }} колонки</span>
+        <span v-if="isSearching" class="board__counter">
+          Найдено: {{ searchCount }} {{ pluralize(searchCount, 'task') }}
+        </span>
+        <span v-else class="board__counter">{{ columnsCount }} {{ pluralize(columnsCount ?? 0, 'column') }}</span>
       </div>
       <div class="board__header-actions">
         <slot name="header-actions" />

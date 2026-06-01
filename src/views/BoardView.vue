@@ -14,12 +14,14 @@ import { useTaskStore } from '@/stores/task'
 import { useColumnStore } from '@/stores/column'
 import { useBoardStore } from '@/stores/board'
 import { useBoardStorage, seedBoardData } from '@/composables/useBoardStorage'
+import { useSearch } from '@/composables/useSearch'
 import type { Task, Column as ColumnType, DraggableChangeEvent } from '@/types'
 
 const taskStore = useTaskStore()
 const columnStore = useColumnStore()
 const boardStore = useBoardStore()
 const { loadState, resetBoard, isLoaded } = useBoardStorage()
+const { isSearching, debouncedQuery, matchesTask } = useSearch()
 
 const isAddTaskModalOpen = ref(false)
 const isAddColumnModalOpen = ref(false)
@@ -163,6 +165,21 @@ function handleResetBoard() {
   }
 }
 
+function getFilteredTaskIds(taskIds: string[]): string[] {
+  if (!debouncedQuery.value) {
+    return taskIds
+  }
+
+  return taskIds.filter((id) => {
+    const task = taskStore.tasks[id]
+    return task && matchesTask(task.title, task.description)
+  })
+}
+
+function getFilteredCount(taskIds: string[]): number {
+  return getFilteredTaskIds(taskIds).length
+}
+
 const deleteModalTitle = computed(() =>
   deleteMode.value === 'column' ? 'Удалить колонку?' : 'Удалить задачу?'
 )
@@ -191,13 +208,27 @@ const deleteModalConfirmText = computed(() =>
       :key="column.id"
       :column-id="column.id"
       :title="column.title"
-      :count="column.taskIds.length"
+      :count="isSearching ? getFilteredCount(column.taskIds) : column.taskIds.length"
       @add-task="openAddTaskModal(column.id)"
       @edit="openEditColumnModal(column)"
       @delete="handleDeleteColumn(column.id)"
     >
       <template #tasks>
+        <div v-if="isSearching" class="draggable-list">
+          <Card
+            v-for="taskId in getFilteredTaskIds(column.taskIds)"
+            :key="taskId"
+            :task-id="taskId"
+            :title="taskStore.tasks[taskId].title"
+            :description="taskStore.tasks[taskId].description"
+            @click="openEditTaskModal(taskStore.tasks[taskId])"
+          />
+          <div v-if="getFilteredTaskIds(column.taskIds).length === 0" class="column-empty">
+            Нет совпадений
+          </div>
+        </div>
         <draggable
+          v-else
           v-model="column.taskIds"
           class="draggable-list"
           group="tasks"
@@ -280,6 +311,13 @@ const deleteModalConfirmText = computed(() =>
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.column-empty {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 16px 8px;
 }
 
 :deep(.card--ghost) {

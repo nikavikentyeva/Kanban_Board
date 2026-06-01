@@ -1,5 +1,12 @@
 <script setup lang="ts">
-// App root
+import { provide } from 'vue'
+import SearchInput from '@/components/SearchInput.vue'
+import { provideSearch, SearchKey } from '@/composables/useSearch'
+
+const search = provideSearch()
+provide(SearchKey, search)
+
+const { searchQuery, clearQuery } = search
 </script>
 
 <template>
@@ -10,6 +17,11 @@
           <span class="app-header__icon">◼</span>
           <h1 class="app-header__title">Kanban Board</h1>
         </div>
+
+        <div class="app-header__search">
+          <SearchInput v-model="searchQuery" @clear="clearQuery" />
+        </div>
+
         <div class="app-header__actions">
           <button class="app-header__btn">Настройки</button>
           <button class="app-header__btn app-header__btn--primary">Новая задача</button>
@@ -40,12 +52,14 @@
   width: 100%;
   max-width: 1920px;
   margin: 0 auto;
+  gap: 16px;
 }
 
 .app-header__logo {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .app-header__icon {
@@ -59,10 +73,16 @@
   letter-spacing: -0.01em;
 }
 
+.app-header__search {
+  flex: 1;
+  max-width: 360px;
+}
+
 .app-header__actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .app-header__btn {
@@ -74,6 +94,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
 }
 
 .app-header__btn:hover {
