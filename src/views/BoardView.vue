@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import draggable from 'vuedraggable'
 import Board from '@/components/Board.vue'
 import Column from '@/components/Column.vue'
@@ -13,8 +13,9 @@ import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue'
 import { useTaskStore } from '@/stores/task'
 import { useColumnStore } from '@/stores/column'
 import { useBoardStore } from '@/stores/board'
-import { useBoardStorage, seedBoardData } from '@/composables/useBoardStorage'
+import { useBoardStorage, seedBoardData, getCurrentState, applyState } from '@/composables/useBoardStorage'
 import { useSearch } from '@/composables/useSearch'
+import { useHistory } from '@/composables/useHistory'
 import type { Task, Column as ColumnType, DraggableChangeEvent } from '@/types'
 
 const taskStore = useTaskStore()
@@ -22,6 +23,7 @@ const columnStore = useColumnStore()
 const boardStore = useBoardStore()
 const { loadState, resetBoard, isLoaded } = useBoardStorage()
 const { isSearching, debouncedQuery, matchesTask } = useSearch()
+const { canUndo, canRedo, record, undo, redo } = useHistory()
 
 const isAddTaskModalOpen = ref(false)
 const isAddColumnModalOpen = ref(false)
@@ -40,6 +42,12 @@ onMounted(() => {
     seedBoardData()
   }
   isLoaded.value = true
+  record(getCurrentState())
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
 })
 
 function openAddTaskModal(columnId: string) {
@@ -58,6 +66,7 @@ function handleAddTask(title: string, description: string) {
   columnStore.addTaskToColumn(activeColumnId.value, task.id)
   isAddTaskModalOpen.value = false
   activeColumnId.value = null
+  record(getCurrentState())
 }
 
 function openEditTaskModal(task: Task) {
@@ -70,6 +79,7 @@ function handleSaveTask(title: string, description: string) {
   taskStore.updateTask(activeTask.value.id, { title, description })
   isEditTaskModalOpen.value = false
   activeTask.value = null
+  record(getCurrentState())
 }
 
 function handleRequestDelete() {
@@ -94,6 +104,7 @@ function handleSaveColumn(title: string) {
   columnStore.updateColumn(activeColumn.value.id, title)
   isEditColumnModalOpen.value = false
   activeColumn.value = null
+  record(getCurrentState())
 }
 
 function performDeleteTask() {
@@ -121,6 +132,7 @@ function handleConfirmDelete() {
   }
 
   handleCloseConfirmModal()
+  record(getCurrentState())
 }
 
 function handleCloseAddModal() {
@@ -151,17 +163,50 @@ function handleCloseConfirmModal() {
 function handleAddColumn(title: string) {
   columnStore.addColumn(title)
   isAddColumnModalOpen.value = false
+  record(getCurrentState())
 }
 
 function handleTaskChange(columnId: string, event: DraggableChangeEvent<string>) {
   if (event.added) {
     taskStore.moveTask(event.added.element, columnId)
   }
+  record(getCurrentState())
 }
 
 function handleResetBoard() {
   if (confirm('Вы уверены, что хотите сбросить доску? Все изменения будут потеряны.')) {
+    record(getCurrentState())
     resetBoard()
+    record(getCurrentState())
+  }
+}
+
+function handleUndo() {
+  const state = undo()
+  if (state) {
+    applyState(state)
+  }
+}
+
+function handleRedo() {
+  const state = redo()
+  if (state) {
+    applyState(state)
+  }
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault()
+    if (e.shiftKey) {
+      handleRedo()
+    } else {
+      handleUndo()
+    }
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+    e.preventDefault()
+    handleRedo()
   }
 }
 
@@ -201,6 +246,8 @@ const deleteModalConfirmText = computed(() =>
     :columns-count="columnStore.columns.length"
   >
     <template #header-actions>
+      <button class="history-btn" :disabled="!canUndo" @click="handleUndo" data-tooltip="Отменить (Ctrl+Z)">↶</button>
+      <button class="history-btn" :disabled="!canRedo" @click="handleRedo" data-tooltip="Повторить (Ctrl+Y)">↷</button>
       <button class="reset-btn" @click="handleResetBoard">Сбросить доску</button>
     </template>
     <Column
@@ -305,6 +352,61 @@ const deleteModalConfirmText = computed(() =>
 .reset-btn:hover {
   border-color: var(--color-border-hover);
   background: #f9fafb;
+}
+
+.history-btn {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+  cursor: pointer;
+}
+
+.history-btn:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+  background: #f9fafb;
+}
+
+.history-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.history-btn[data-tooltip] {
+  position: relative;
+}
+
+.history-btn[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: #1f2937;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.history-btn[data-tooltip]:hover::before {
+  content: '';
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-bottom-color: #1f2937;
+  pointer-events: none;
+  z-index: 10;
 }
 
 .draggable-list {

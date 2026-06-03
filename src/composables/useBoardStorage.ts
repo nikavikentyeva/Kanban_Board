@@ -12,6 +12,28 @@ export interface BoardState {
   tasks: Record<string, Task>
 }
 
+export function getCurrentState(): BoardState {
+  const boardStore = useBoardStore()
+  const columnStore = useColumnStore()
+  const taskStore = useTaskStore()
+
+  return {
+    board: { title: boardStore.title },
+    columns: JSON.parse(JSON.stringify(columnStore.columns)),
+    tasks: JSON.parse(JSON.stringify(taskStore.tasks)),
+  }
+}
+
+export function applyState(state: BoardState) {
+  const boardStore = useBoardStore()
+  const columnStore = useColumnStore()
+  const taskStore = useTaskStore()
+
+  boardStore.setTitle(state.board.title)
+  columnStore.setColumns(JSON.parse(JSON.stringify(state.columns)))
+  taskStore.setTasks(JSON.parse(JSON.stringify(state.tasks)))
+}
+
 export function seedBoardData() {
   const columnStore = useColumnStore()
   const taskStore = useTaskStore()
