@@ -21,7 +21,7 @@ import type { Task, Column as ColumnType, DraggableChangeEvent } from '@/types'
 const taskStore = useTaskStore()
 const columnStore = useColumnStore()
 const boardStore = useBoardStore()
-const { loadState, resetBoard, isLoaded } = useBoardStorage()
+const { loadState, isLoaded } = useBoardStorage()
 const { isSearching, debouncedQuery, matchesTask } = useSearch()
 const { canUndo, canRedo, record, undo, redo } = useHistory()
 
@@ -173,14 +173,6 @@ function handleTaskChange(columnId: string, event: DraggableChangeEvent<string>)
   record(getCurrentState())
 }
 
-function handleResetBoard() {
-  if (confirm('Вы уверены, что хотите сбросить доску? Все изменения будут потеряны.')) {
-    record(getCurrentState())
-    resetBoard()
-    record(getCurrentState())
-  }
-}
-
 function handleUndo() {
   const state = undo()
   if (state) {
@@ -246,9 +238,22 @@ const deleteModalConfirmText = computed(() =>
     :columns-count="columnStore.columns.length"
   >
     <template #header-actions>
-      <button class="history-btn" :disabled="!canUndo" @click="handleUndo" data-tooltip="Отменить (Ctrl+Z)">↶</button>
-      <button class="history-btn" :disabled="!canRedo" @click="handleRedo" data-tooltip="Повторить (Ctrl+Y)">↷</button>
-      <button class="reset-btn" @click="handleResetBoard">Сбросить доску</button>
+      <button
+        class="history-btn"
+        :disabled="!canUndo"
+        @click="handleUndo"
+        data-tooltip="Отменить (Ctrl+Z)"
+      >
+        ↶
+      </button>
+      <button
+        class="history-btn"
+        :disabled="!canRedo"
+        @click="handleRedo"
+        data-tooltip="Повторить (Ctrl+Y)"
+      >
+        ↷
+      </button>
     </template>
     <Column
       v-for="column in columnStore.columns"
@@ -337,23 +342,6 @@ const deleteModalConfirmText = computed(() =>
 </template>
 
 <style scoped lang="scss">
-.reset-btn {
-  padding: 6px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  transition: border-color 0.15s, background 0.15s;
-  cursor: pointer;
-}
-
-.reset-btn:hover {
-  border-color: var(--color-border-hover);
-  background: #f9fafb;
-}
-
 .history-btn {
   padding: 6px 10px;
   border-radius: var(--radius-sm);

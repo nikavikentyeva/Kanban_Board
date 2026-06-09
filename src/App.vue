@@ -1,12 +1,65 @@
 <script setup lang="ts">
-import { provide } from 'vue'
+import { provide, ref } from 'vue'
 import SearchInput from '@/components/SearchInput.vue'
+import SettingsModal from '@/components/SettingsModal.vue'
+import AddTaskGlobalModal from '@/components/AddTaskGlobalModal.vue'
 import { provideSearch, SearchKey } from '@/composables/useSearch'
+import { useBoardStore } from '@/stores/board'
+import { useColumnStore } from '@/stores/column'
+import { useTaskStore } from '@/stores/task'
+import { seedBoardData, getCurrentState } from '@/composables/useBoardStorage'
+import { useHistory } from '@/composables/useHistory'
 
 const search = provideSearch()
 provide(SearchKey, search)
 
 const { searchQuery, clearQuery } = search
+
+const boardStore = useBoardStore()
+const columnStore = useColumnStore()
+const taskStore = useTaskStore()
+const { record } = useHistory()
+
+const isSettingsOpen = ref(false)
+const isAddTaskOpen = ref(false)
+
+function openSettings() {
+  isSettingsOpen.value = true
+}
+
+function closeSettings() {
+  isSettingsOpen.value = false
+}
+
+function handleSaveSettings(title: string) {
+  boardStore.setTitle(title)
+  record(getCurrentState())
+  closeSettings()
+}
+
+function handleResetBoard() {
+  record(getCurrentState())
+  localStorage.removeItem('kanban-board-state')
+  taskStore.setTasks({})
+  seedBoardData()
+  record(getCurrentState())
+  closeSettings()
+}
+
+function openAddTask() {
+  isAddTaskOpen.value = true
+}
+
+function closeAddTask() {
+  isAddTaskOpen.value = false
+}
+
+function handleAddTask(title: string, description: string, columnId: string) {
+  const task = taskStore.addTask(columnId, title, description)
+  columnStore.addTaskToColumn(columnId, task.id)
+  record(getCurrentState())
+  closeAddTask()
+}
 </script>
 
 <template>
@@ -23,14 +76,29 @@ const { searchQuery, clearQuery } = search
         </div>
 
         <div class="app-header__actions">
-          <button class="app-header__btn">Настройки</button>
-          <button class="app-header__btn app-header__btn--primary">Новая задача</button>
+          <button class="app-header__btn" @click="openSettings">Настройки</button>
+          <button class="app-header__btn app-header__btn--primary" @click="openAddTask">Новая задача</button>
         </div>
       </div>
     </header>
     <main class="app-main">
       <RouterView />
     </main>
+
+    <SettingsModal
+      :open="isSettingsOpen"
+      :board-title="boardStore.title"
+      @close="closeSettings"
+      @save="handleSaveSettings"
+      @reset="handleResetBoard"
+    />
+
+    <AddTaskGlobalModal
+      :open="isAddTaskOpen"
+      :columns="columnStore.columns"
+      @close="closeAddTask"
+      @submit="handleAddTask"
+    />
   </div>
 </template>
 
@@ -43,6 +111,10 @@ const { searchQuery, clearQuery } = search
   align-items: center;
   padding: 0 24px;
   flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    padding: 0 12px;
+  }
 }
 
 .app-header__inner {
@@ -71,11 +143,19 @@ const { searchQuery, clearQuery } = search
   font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.01em;
+
+  @media (max-width: 640px) {
+    display: none;
+  }
 }
 
 .app-header__search {
   flex: 1;
   max-width: 360px;
+
+  @media (max-width: 640px) {
+    max-width: none;
+  }
 }
 
 .app-header__actions {
@@ -83,6 +163,10 @@ const { searchQuery, clearQuery } = search
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    gap: 6px;
+  }
 }
 
 .app-header__btn {
@@ -95,6 +179,12 @@ const { searchQuery, clearQuery } = search
   border: 1px solid var(--color-border);
   transition: border-color 0.15s, background 0.15s;
   cursor: pointer;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
 }
 
 .app-header__btn:hover {

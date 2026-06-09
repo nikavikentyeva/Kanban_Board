@@ -77,6 +77,10 @@ const emit = defineEmits<ColumnEmits>()
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px 10px;
+
+    @media (max-width: 640px) {
+      padding: 10px 12px 8px;
+    }
   }
 
   &__info {
@@ -145,10 +149,18 @@ const emit = defineEmits<ColumnEmits>()
     padding: 0 12px 12px;
     overflow-y: auto;
     flex: 1;
+
+    @media (max-width: 640px) {
+      padding: 0 8px 8px;
+    }
   }
 
   &__footer {
     padding: 0 12px 12px;
+
+    @media (max-width: 640px) {
+      padding: 0 8px 8px;
+    }
   }
 }
 </style>

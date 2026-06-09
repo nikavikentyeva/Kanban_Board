@@ -61,6 +61,11 @@ onUnmounted(() => {
   background: rgba(0, 0, 0, 0.45);
   padding: 24px;
 
+  @media (max-width: 640px) {
+    padding: 16px;
+    align-items: flex-end;
+  }
+
   &__content {
     position: relative;
     background: var(--color-surface);
@@ -69,6 +74,12 @@ onUnmounted(() => {
     width: 100%;
     max-width: 480px;
     padding: 24px;
+
+    @media (max-width: 640px) {
+      padding: 20px;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      max-width: none;
+    }
   }
 
   &__close {

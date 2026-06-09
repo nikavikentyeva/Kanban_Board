@@ -19,6 +19,13 @@
   --gap: 12px;
 }
 
+@media (max-width: 640px) {
+  :root {
+    --column-width: 260px;
+    --gap: 8px;
+  }
+}
+
 *,
 *::before,
 *::after {

@@ -60,18 +60,33 @@ const searchCount = computed(() => {
     gap: 12px;
     padding: 20px 24px 12px;
     flex-shrink: 0;
+
+    @media (max-width: 640px) {
+      flex-wrap: wrap;
+      padding: 12px 12px 8px;
+      gap: 8px;
+    }
   }
 
   &__header-left {
     display: flex;
     align-items: baseline;
     gap: 12px;
+
+    @media (max-width: 640px) {
+      gap: 8px;
+    }
   }
 
   &__header-actions {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
+
+    @media (max-width: 640px) {
+      gap: 6px;
+    }
   }
 
   &__title {
@@ -94,6 +109,10 @@ const searchCount = computed(() => {
     overflow-x: auto;
     overflow-y: hidden;
     align-items: flex-start;
+
+    @media (max-width: 640px) {
+      padding: 0 12px 12px;
+    }
   }
 }
 </style>
